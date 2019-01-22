@@ -1,8 +1,8 @@
 <template>
   <div 
     class="grid-item"
-    :class="{'grid-item-dragging': isDragging, 'grid-item-resizing': isResizing}"
-    :style="style">
+    :class="{'editable': editable, 'grid-item-dragging': isDragging, 'grid-item-resizing': isResizing}"
+    :style="itemStyle">
     <div
       class="grid-item-content"
       @mousedown="dragStart"
@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import {getControlPosition, createCoreData} from './util.js';
+import {getControlPosition, createCoreData, addEvent, removeEvent} from './util.js';
 
 export default {
   name: 'GridItem',
@@ -51,6 +51,10 @@ export default {
     },
     rowNum: {
       type: Number
+    },
+    editable: {
+      type: Boolean,
+      default: true
     }
   },
   created() {
@@ -86,28 +90,14 @@ export default {
     colWidth(val) {
       this.left = (this.colWidth * this.x);
       this.innerWidth = this.colWidth;
-      this.createStyle();
     },
     colHeight(val) {
       this.top = (this.colHeight * this.y);
       this.innerHeight = this.colHeight;
-      this.createStyle();
-    },
-    x() {
-      this.createStyle()
-    },
-    y() {
-      this.createStyle()
-    },
-    w() {
-      this.createStyle()
-    },
-    h() {
-      this.createStyle()
     }
   },
-  methods: {
-    createStyle() {
+  computed: {
+    itemStyle() {
       let style = {
         width: (this.innerW * this.colWidth) + 'px',
         height: (this.innerH * this.colHeight) + 'px',
@@ -123,11 +113,13 @@ export default {
       if(this.isResizing) {
         style.width = this.resizeInfo.width + 'px';
         style.height = this.resizeInfo.height + 'px';
-      }
-
-      this.style = style;
-    },
+      };
+      return style;
+    }
+  },
+  methods: {
     dragStart(event) {
+      if(!this.editable) return;
       this.isDragging = true;
       /*
         getControlPosition()
@@ -160,12 +152,12 @@ export default {
         newPosition.left = this.dragPosition.left + coreEvent.deltaX;
         newPosition.top = this.dragPosition.top + coreEvent.deltaY;
         this.dragPosition = newPosition;
-        this.createStyle();
         this.lastX = position.x;
         this.lastY = position.y;
       }
     },
     dragEnd(evt) {
+      if(!this.editable) return;
       if(this.isDragging) this.dragEndHandler();
       this.eventBus.$emit('compact');
     },
@@ -184,9 +176,9 @@ export default {
       this.$emit('update:x', x);
       this.innerY = y;
       this.$emit('update:y', y);
-      this.createStyle();
     },
     resizeStart(event) {
+      if(!this.editable) return;
       this.isResizing = true;
       const position = getControlPosition(event);
       this.lastResizeX = position.x;
@@ -216,11 +208,11 @@ export default {
         this.$emit('update:w', w);
         this.$emit('update:h', h);
         //-----
-        this.createStyle();
         this.eventBus.$emit('compact');
       }
     },
     resizeEnd(event) {
+      if(!this.editable) return;
       this.resizeEndHandle();
     },
     resizeEndHandle() {
@@ -232,7 +224,6 @@ export default {
       this.innerH = h;
       this.$emit('update:w', w);
       this.$emit('update:h', h);
-      this.createStyle();
       this.eventBus.$emit('compact');
     },
     calcXY(top, left) { //计算 {x, y} 坐标
@@ -256,12 +247,7 @@ export default {
 </script>
 
 <style scoped>
-.grid-item {
-  position: absolute;
-  background: burlywood;
-  border: 1px solid #555;
-  text-align: center;
-  box-sizing: border-box;
+.editable {
   cursor: move;
   transition: all .2s ease-out;
 
@@ -271,6 +257,13 @@ export default {
   -moz-user-select: none; /* Firefox */
   -ms-user-select: none; /* Internet Explorer/Edge */
   user-select: none; /* Non-prefixed version, currently*/
+}
+.grid-item {
+  position: absolute;
+  background: burlywood;
+  border: 1px solid #555;
+  text-align: center;
+  box-sizing: border-box;
 }
 .grid-item-content {
   width: 100%;

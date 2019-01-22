@@ -3,6 +3,7 @@
     <slot name="base"></slot>
 
     <grid-background 
+      v-show="editable"
       :layout="layout"
       :col-width="colWidth"
       :col-height="colHeight"
@@ -10,7 +11,8 @@
       :row-num="rowNum"></grid-background>
 
     <grid-item 
-      v-for="item in originalLayout"
+      v-for="item in layout"
+      :editable="editable"
       :w.sync="item.w"
       :h.sync="item.h"
       :x.sync="item.x"
@@ -54,12 +56,19 @@ export default {
     rowNum: {
       type: Number,
       default: 12
+    },
+    editable: {
+      type: Boolean,
+      default: true
     }
   },
   created() {
     this.compact();
-    this.originalLayout = this.layout;
     eventBus.$on('compact', this.compact);
+    window.onresize = () => {
+       this.containWidth = this.$refs.contain.offsetWidth;
+       this.containHeight = this.$refs.contain.offsetHeight;
+    }
   },
   mounted() {
     this.containWidth = this.$refs.contain.offsetWidth;
@@ -67,32 +76,30 @@ export default {
   },
   data() {
     return {
-      originalLayout: [],
       containWidth: 0,
       containHeight: 0
     }
   },
+  watch: {
+    layout() {
+      this.compact();
+    }
+  },
   computed: {
     colWidth() {
-      return this.containWidth / this.colNum;
+      return parseInt(this.containWidth / this.colNum * 10) / 10;
     },
     colHeight() {
-      return this.containHeight / this.rowNum;
+      return parseInt(this.containHeight / this.rowNum * 10) / 10;
     },
-    sortedLayout() { //将 layout 排序
-      return this.layout.sort(function(a, b) {
-        if (a.y > b.y || (a.y === b.y && a.x > b.x)) {
-          return 1;
-        }
-        return -1;
-      });
-    }
+    /*sortedLayout() {}*/
   },
   methods: {
     compact() { //碰撞检测
       let compared = [];
-      for(let i=0, l=this.sortedLayout.length; i<l; i++) {
-        let item = this.sortedLayout[i];
+      let sortedLayout = this.sortLayout();
+      for(let i=0, l=sortedLayout.length; i<l; i++) {
+        let item = sortedLayout[i];
         this.compactItem(compared, item);
         compared.push(item);
       }
@@ -100,8 +107,8 @@ export default {
     compactItem(compared, item) {
       for(let i=0, l=compared.length; i<l; i++) {
         if( this.isCollide(compared[i], item) ) {
-          item.y = compared[i].h + compared[i].y; //碰撞的话，就 y 轴下移
-          break;
+          item.y = compared[i].h + compared[i].y; //碰撞的话，就 y 轴下移. 
+          // 注意，该操作会触发 computed sortedLayout, 因此 sort layout 改为 method
         }
       }
     },
@@ -113,6 +120,14 @@ export default {
       if (l1.y >= l2.y + l2.h) return false;
       return true;
     },
+    sortLayout() { //将 layout 排序
+      return [].concat(this.layout).sort(function(a, b) {
+        if (a.y > b.y || (a.y === b.y && a.x > b.x)) {
+          return 1;
+        }
+        return -1;
+      });
+    }
 
   }
 }

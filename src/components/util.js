@@ -40,3 +40,25 @@ export function createCoreData(lastX, lastY, x, y) {
 function isNum(num)  {
     return typeof num === 'number' && !isNaN(num);
 }
+
+
+/*export function addEvent(element, type, handler){
+    if (element.addEventListener) {
+        element.addEventListener(type, handler, false);
+    }
+    else if (element.attachEvent) {
+        element.attachEvent("on" + type, handler);
+    }else {
+        element["on" + type] = handler;
+    }
+}
+
+export function removeEvent(element, type, handler){
+    if(element.removeEventListener) {
+        element.removeEventListener(type, handler, false);
+    }else if(element.attachEvent) {
+        element.detachEvent("on"+type, handler);
+    }else {
+        element["on" + type] = null;
+    }
+}*/
