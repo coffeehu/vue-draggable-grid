@@ -12,11 +12,15 @@
       <button @click="isEdit = !isEdit">eidt</button>
       <button @click="addItem">add item</button>
       <button @click="removeItem">remove item</button>
+      <label>col number:</label><input type="number" name="" v-model="colNum">
+      <label>row number:</label><input type="number" name="" v-model="rowNum">
     </div>
 
     <div class="map-wrapper">
       <grid-layout
         :layout="testLayout"
+        :col-num="parseInt(colNum)"
+        :row-num="parseInt(rowNum)"
         :editable="isEdit">
         <div slot="base" class="map">
           <div id="map"></div>
@@ -72,6 +76,8 @@ export default {
   data() {
     return {
       testLayout: testLayout,
+      colNum: 12,
+      rowNum: 12,
       isEdit: true
     }
   },
@@ -86,12 +92,12 @@ export default {
         ],
         view: new View({
           center: [0, 0],
-          zoom: 0
+          zoom: 2
         })
       });
     },
     addItem() {
-      let item = {"x":0,"y":0,"w":2,"h":2};
+      let item = {"x":0,"y":0,"w":1,"h":1};
       item.i = this.testLayout.length;
       this.testLayout.push(item);
     },
